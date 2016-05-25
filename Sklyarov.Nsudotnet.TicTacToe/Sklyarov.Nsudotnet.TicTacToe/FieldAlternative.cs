@@ -50,15 +50,58 @@ namespace Sklyarov.Nsudotnet.TicTacToe
         private Field<Field<Cell>> _field = new Field<Field<Cell>>();
         private IGUI _gui;
 
-        private bool Set(int x, int y, State state)
+        private int Set(int x, int y, State state)
         {
             if (_field[x / size, y / size][x % size, y % size].Value == State.Empty)
             {
                 _field[x / size, y / size][x % size, y % size].Value = state;
-                return true;
+
+                _gui.UpdateCell(_x, _y, _player);
+
+                int result = _field[_x / size, _y / size].Check(_x % size, _y % size);
+                if (result != -1 && result != Field<Field<Cell>>.drawCode)
+                {
+                    switch (result)
+                    {
+                        case Field<Field<Cell>>.horizontalCode:
+                            _gui.UpdateTripleCells(_x, _y - _y % size, _x, _y - _y % size + 1, _x, _y - _y % size + 2, _player);
+                            break;
+                        case Field<Field<Cell>>.verticalCode:
+                            _gui.UpdateTripleCells(_x - _x % size, _y, _x - _x % size + 1, _y, _x - _x % size + 2, _y, _player);
+                            break;
+                        case Field<Field<Cell>>.slopingCode:
+                            _gui.UpdateTripleCells(_x - _x % size, _y - _y % size, _x - _x % size + 1, _y - _y % size + 1, _x - _x % size + 2, _y - _y % size + 2, _player);
+                            break;
+                        case Field<Field<Cell>>.backSlopingCode:
+                            _gui.UpdateTripleCells(_x - _x % size + 2, _y - _y % size, _x - _x % size + 1, _y - _y % size + 1, _x - _x % size, _y - _y % size + 2, _player);
+                            break;
+                    }
+
+                    result = _field.Check(_x / size, _y / size);
+                    if (result == Field<Field<Cell>>.drawCode)
+                    {
+                        return drawCode;
+                    }
+                    else if (result != -1)
+                    {
+                        return winCode;
+                    }
+                }
+
+                _player = (_player == State.X) ? State.O : State.X;
+
+                _lastX = _x % size;
+                _lastY = _y % size;
+                if (isFull(_lastX, _lastY))
+                {
+                    _lastX = -1;
+                    _lastY = -1;
+                }
+
+                return successfulTryCode;
             }
 
-            return false;
+            return -1;
         }
       
         private bool isFull(int x, int y)
@@ -95,62 +138,10 @@ namespace Sklyarov.Nsudotnet.TicTacToe
                 return tryAgainCode;
             }
 
-            if (Set(_x, _y, _player))
+            int result = Set(_x, _y, _player);
+            if (result != -1)
             {
-                _gui.UpdateCell(_x, _y, _player);
-
-                int result = _field[_x / size, _y / size].Check(_x % size, _y % size);
-                if (result != -1 && result != Field<Field<Cell>>.drawCode)
-                {
-                    Console.ForegroundColor = (_player == State.X) ? ConsoleColor.Red : ConsoleColor.Blue;
-                    switch (result)
-                    {
-                        case Field<Field<Cell>>.horizontalCode:
-                            _gui.UpdateCell(_x, _y - _y % size, _player);
-                            _gui.UpdateCell(_x, _y - _y % size + 1, _player);
-                            _gui.UpdateCell(_x, _y - _y % size + 2, _player);
-                            break;
-                        case Field<Field<Cell>>.verticalCode:
-                            _gui.UpdateCell(_x - _x % size, _y, _player);
-                            _gui.UpdateCell(_x - _x % size + 1, _y, _player);
-                            _gui.UpdateCell(_x - _x % size + 2, _y, _player);
-                            break;
-                        case Field<Field<Cell>>.slopingCode:
-                            _gui.UpdateCell(_x - _x % size, _y - _y % size, _player);
-                            _gui.UpdateCell(_x - _x % size + 1, _y - _y % size + 1, _player);
-                            _gui.UpdateCell(_x - _x % size + 2, _y - _y % size + 2, _player);
-                            break;
-                        case Field<Field<Cell>>.backSlopingCode:
-                            _gui.UpdateCell(_x - _x % size + 2, _y - _y % size, _player);
-                            _gui.UpdateCell(_x - _x % size + 1, _y - _y % size + 1, _player);
-                            _gui.UpdateCell(_x - _x % size, _y - _y % size + 2, _player);
-                            break;
-                    }
-
-                    Console.ForegroundColor = ConsoleColor.White;
-
-                    result = _field.Check(_x / size, _y / size);
-                    if (result == Field<Field<Cell>>.drawCode)
-                    {
-                        return drawCode;
-                    }
-                    else if (result != -1)
-                    {
-                        return winCode;
-                    }
-                }
-
-                _player = (_player == State.X) ? State.O : State.X;
-
-                _lastX = _x % size;
-                _lastY = _y % size;
-                if (isFull(_lastX, _lastY))
-                {
-                    _lastX = -1;
-                    _lastY = -1;
-                }
-
-                return successfulTryCode;
+                return result;
             }
 
             return tryAgainCode;

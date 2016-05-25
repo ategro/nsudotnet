@@ -77,6 +77,14 @@ namespace Sklyarov.Nsudotnet.TicTacToe
 
             return result;
         }
+        public void UpdateTripleCells(int x1, int y1, int x2, int y2, int x3, int y3, State player)
+        {
+            Console.ForegroundColor = (player == State.X) ? ConsoleColor.Red : ConsoleColor.Blue;
+            UpdateCell(x1, y1, player);
+            UpdateCell(x2, y2, player);
+            UpdateCell(x3, y3, player);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
 
 
 
