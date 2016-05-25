@@ -10,7 +10,7 @@ namespace Sklyarov.Nsudotnet.TicTacToe
     {
         static void Main(string[] args)
         {
-            FieldAlternative field = new FieldAlternative();
+            FieldAlternative field = new FieldAlternative(new ConsoleGUI());
             field.Run();
         }
     }

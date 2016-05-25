@@ -8,10 +8,23 @@ namespace Sklyarov.Nsudotnet.TicTacToe
 {
     class FieldAlternative
     {
+        public const int tryAgainCode = 0;
+        public const int successfulTryCode = 1;
+        public const int drawCode = 2;
+        public const int winCode = 3;
+       
+        public static readonly int size = 3;
+        public static readonly int posMin = 1;
+        public static readonly int posMax = 9;
+
+        public FieldAlternative(IGUI gui)
+        {
+            _gui = gui;
+        }
         public void Run()
         {
-            Print();
-            PrintPlayer();
+            _gui.Init();
+            _gui.UpdatePlayer(_player);
 
             while (true)
             {
@@ -20,36 +33,22 @@ namespace Sklyarov.Nsudotnet.TicTacToe
                     case tryAgainCode: continue;
                     case successfulTryCode: break;
                     case drawCode:
-                        SetMessagePosition();
-                        Console.WriteLine("DRAW!");
-                        Console.ReadLine();
+                        _gui.PrintResult(State.Draw);
                         return;
                     case winCode:
-                        SetMessagePosition();
-                        Console.WriteLine("{0} WINS!", PlayerToString());
-                        Console.ReadLine();
+                        _gui.PrintResult(_player);
                         return;
                 }
 
-                PrintPlayer();
+                _gui.UpdatePlayer(_player);
             }
         }
-
-        private const int tryAgainCode = 0;
-        private const int successfulTryCode = 1;
-        private const int drawCode = 2;
-        private const int winCode = 3;
-
-        private static readonly int size = 3;
-        private static readonly int posMin = 1;
-        private static readonly int posMax = 9;
-        private static readonly int horizontalOffset = 4;
-        private static readonly int verticalOffset = 2;
 
         private State _player = State.X;
         private int _x, _y;
         private int _lastX = -1, _lastY = -1;
         private Field<Field<Cell>> _field = new Field<Field<Cell>>();
+        private IGUI _gui;
 
         private bool Set(int x, int y, State state)
         {
@@ -61,56 +60,7 @@ namespace Sklyarov.Nsudotnet.TicTacToe
 
             return false;
         }
-
-        private void Print()
-        {
-            Console.SetCursorPosition(0, 0);
-            Console.WriteLine("    1   2   3   4   5   6   7   8   9 ");
-            Console.WriteLine("  ╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗");
-            Console.WriteLine("1 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢");
-            Console.WriteLine("2 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢");
-            Console.WriteLine("3 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣");
-            Console.WriteLine("4 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢");
-            Console.WriteLine("5 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢");
-            Console.WriteLine("6 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣");
-            Console.WriteLine("7 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢");
-            Console.WriteLine("8 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢");
-            Console.WriteLine("9 ║   │   │   ║   │   │   ║   │   │   ║");
-            Console.WriteLine("  ╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝");
-            Console.WriteLine("Player: Row Column. Example: \"X: 5 5\"");
-            Console.WriteLine(" : ");
-        }
-
-        private string PlayerToString()
-        {
-            return (_player == State.X) ? "X" : "O";
-        }
-
-        private void SetMessagePosition(int position = 0)
-        {
-            Console.SetCursorPosition(position, 21);
-        }
-
-        private void PrintCell(int x, int y)
-        {
-            Console.SetCursorPosition(horizontalOffset * (y + 1), verticalOffset * (x + 1));
-            Console.Write(PlayerToString());
-        }
-
-        private void PrintPlayer()
-        {
-            SetMessagePosition();
-            Console.Write(PlayerToString());
-        }
-
+      
         private bool isFull(int x, int y)
         {
             bool result = true;
@@ -127,18 +77,9 @@ namespace Sklyarov.Nsudotnet.TicTacToe
 
         private int NextStep()
         {
-            SetMessagePosition(3);
+            string str = _gui.GetNextStep();
 
-            String str;
-            str = Console.ReadLine();
-
-            SetMessagePosition(3);
-            for (int i = 0; i < str.Length; ++i)
-            {
-                Console.Write(" ");
-            }
-
-            String[] strs = str.Split(new char[] { ' ' });
+            string[] strs = str.Split(new char[] { ' ' });
             if (strs.Length < 2 ||
                 !int.TryParse(strs[0], out _x) ||
                 !int.TryParse(strs[1], out _y) ||
@@ -156,7 +97,7 @@ namespace Sklyarov.Nsudotnet.TicTacToe
 
             if (Set(_x, _y, _player))
             {
-                PrintCell(_x, _y);
+                _gui.UpdateCell(_x, _y, _player);
 
                 int result = _field[_x / size, _y / size].Check(_x % size, _y % size);
                 if (result != -1 && result != Field<Field<Cell>>.drawCode)
@@ -165,24 +106,24 @@ namespace Sklyarov.Nsudotnet.TicTacToe
                     switch (result)
                     {
                         case Field<Field<Cell>>.horizontalCode:
-                            PrintCell(_x, _y - _y % size);
-                            PrintCell(_x, _y - _y % size + 1);
-                            PrintCell(_x, _y - _y % size + 2);
+                            _gui.UpdateCell(_x, _y - _y % size, _player);
+                            _gui.UpdateCell(_x, _y - _y % size + 1, _player);
+                            _gui.UpdateCell(_x, _y - _y % size + 2, _player);
                             break;
                         case Field<Field<Cell>>.verticalCode:
-                            PrintCell(_x - _x % size, _y);
-                            PrintCell(_x - _x % size + 1, _y);
-                            PrintCell(_x - _x % size + 2, _y);
+                            _gui.UpdateCell(_x - _x % size, _y, _player);
+                            _gui.UpdateCell(_x - _x % size + 1, _y, _player);
+                            _gui.UpdateCell(_x - _x % size + 2, _y, _player);
                             break;
                         case Field<Field<Cell>>.slopingCode:
-                            PrintCell(_x - _x % size, _y - _y % size);
-                            PrintCell(_x - _x % size + 1, _y - _y % size + 1);
-                            PrintCell(_x - _x % size + 2, _y - _y % size + 2);
+                            _gui.UpdateCell(_x - _x % size, _y - _y % size, _player);
+                            _gui.UpdateCell(_x - _x % size + 1, _y - _y % size + 1, _player);
+                            _gui.UpdateCell(_x - _x % size + 2, _y - _y % size + 2, _player);
                             break;
                         case Field<Field<Cell>>.backSlopingCode:
-                            PrintCell(_x - _x % size + 2, _y - _y % size);
-                            PrintCell(_x - _x % size + 1, _y - _y % size + 1);
-                            PrintCell(_x - _x % size, _y - _y % size + 2);
+                            _gui.UpdateCell(_x - _x % size + 2, _y - _y % size, _player);
+                            _gui.UpdateCell(_x - _x % size + 1, _y - _y % size + 1, _player);
+                            _gui.UpdateCell(_x - _x % size, _y - _y % size + 2, _player);
                             break;
                     }
 
