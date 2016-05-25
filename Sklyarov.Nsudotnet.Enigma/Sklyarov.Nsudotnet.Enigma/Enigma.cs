@@ -8,28 +8,28 @@ namespace Sklyarov.Nsudotnet.Enigma
     {
         public static void Encrypt(String inName,  String algoName, String outName)
         {
-            SymmetricAlgorithm algo = SymmetricAlgorithm.Create(algoName);
-            CreateKeyFile(inName, algo);
-            BaseAlgorithm(inName, outName, algo.CreateEncryptor());
+            using (SymmetricAlgorithm algo = SymmetricAlgorithm.Create(algoName))
+            {
+                CreateKeyFile(inName, algo);
+                BaseAlgorithm(inName, outName, algo.CreateEncryptor());
+            }
         }
-
         public static void Decrypt(String inName, String algoName, String keyName, String outName)
         {
-            SymmetricAlgorithm algo = SymmetricAlgorithm.Create(algoName);
-            LoadKeyFile(keyName, algo);
-            BaseAlgorithm(inName, outName, algo.CreateDecryptor());
+            using (SymmetricAlgorithm algo = SymmetricAlgorithm.Create(algoName))
+            {
+                LoadKeyFile(keyName, algo);
+                BaseAlgorithm(inName, outName, algo.CreateDecryptor());
+            }
         }
-
         private static void BaseAlgorithm(String inName, String outName, ICryptoTransform cryptoTransform)
         {
             using (FileStream inStream = new FileStream(inName, FileMode.Open, FileAccess.Read),
                               outStream = new FileStream(outName, FileMode.OpenOrCreate, FileAccess.Write))
             {
-                outStream.SetLength(0);
-
                 using (CryptoStream cryptoStream = new CryptoStream(outStream, cryptoTransform, CryptoStreamMode.Write))
                 {
-                    Write(inStream, cryptoStream);
+                    inStream.CopyTo(cryptoStream);
                 }
             }
         }
